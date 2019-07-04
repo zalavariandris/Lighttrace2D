@@ -1,14 +1,21 @@
 			var PAPER = {};
 			var canvas;
 			var MaxRayLength = 2000;
-			var SampleCount = 300;
+			var SampleCount = 1200;
 			var selectAndMoveTool;
 			var raysGroup;
 			var sceneGroup;
 			var vizGroup;
 			var circle, ray;
 			var omni;
-			var LightColor = 'rgba(255,255,255,0.1)';
+			var LightColor = [255,255,255];
+			var Intensity = 10;
+
+			gui = new dat.GUI();
+			gui.add(window, 'SampleCount', 0, 6000);
+			gui.add(window, 'MaxRayLength', 0, 5000);
+			gui.add(window, 'Intensity', 0, 50);
+			gui.addColor(window, 'LightColor');
 
 			paper.install(PAPER);
 			canvas = document.getElementById('myCanvas');
@@ -110,7 +117,7 @@
 				{
 					// add light ray
 					var ray = new PAPER.Path({parent: raysGroup});
-					ray.strokeColor = LightColor;
+					ray.strokeColor = [LightColor[0], LightColor[1], LightColor[2], Intensity*Intensity/SampleCount];
 					ray.strokeWidth = 1.5;
 					ray.add(rays.origins[i], rays.origins[i].add(rays.directions[i]));
 
