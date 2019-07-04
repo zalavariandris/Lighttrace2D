@@ -1,14 +1,15 @@
 			var PAPER = {};
 			var canvas;
+			var MaxBounce = 3;
 			var MaxRayLength = 2000;
 			var SampleCount = 1200;
 			var selectAndMoveTool;
-			var raysGroup;
+			var raysLayer;
 			var sceneGroup;
 			var circle, ray;
 			var omni;
 			var LightColor = [255,255,255];
-			var Intensity = 7;
+			var Intensity = 0.3;
 
 			// setup PAPER
 			paper.install(PAPER);
@@ -28,7 +29,8 @@
 				radius: 100,
 				strokeColor: 'white',
 				fillColor: "black",
-				parent: sceneGroup
+				parent: sceneGroup,
+				data:{ior: 1.33}
 			});
 
 			// The Lightsource
@@ -62,42 +64,41 @@
 			}
 
 			// Raytrace
-			raysGroup = new PAPER.Layer({name: "rays"});
-			raysGroup.locked = true;
-			// raysGroup.visible = false;
-
+			var rays;
+			raysLayer = new PAPER.Layer({name: "rays"});
+			raysLayer.locked = true;
 
 			function reflect(V, N){
 				return V.subtract(N.multiply(2*V.dot(N)));
 			}
 
 			function refract(V, N, ior=1.333){
-				var r  = ior;
-				var c = N.dot(V);
+				var r  = 1/ior;
+				var c = - N.dot(V);
 				return V.multiply(r).add( N.multiply(r*c - Math.sqrt( 1-Math.pow(r,2) * (1-Math.pow(c,2) )  )) );
 			}
 
+			
 			function generateInitialRays(){
-				var rays =  {origins: [], directions: []};
+				rays = [];
+				raysLayer.removeChildren();
 				for(var i=0; i<SampleCount; i++){
-					rays.origins.push(omni.position);
 					var angle = Math.PI*2/SampleCount*i;
-					rays.directions.push(new PAPER.Point(Math.sin(angle)*MaxRayLength, Math.cos(angle)*MaxRayLength));
+					var ray = new PAPER.Path.Line({
+						from: omni.position,
+						to: omni.position.add(new PAPER.Point(Math.sin(angle)*MaxRayLength, Math.cos(angle)*MaxRayLength)),
+						parent: raysLayer,
+						strokeColor: [LightColor[0], LightColor[1], LightColor[2],Intensity]
+					});
+					rays.push(ray);
 				}
-				return rays;
 			}
 
-			function raytrace(rays){
-				var secondaryRays = {origins: [], directions: []};
-				for(var i=0; i<rays.origins.length; i++)
-				{
-					// add light ray
-					var ray = new PAPER.Path({parent: raysGroup});
-					ray.strokeColor = [LightColor[0], LightColor[1], LightColor[2], Intensity*Intensity/SampleCount];
-					ray.strokeWidth = 1.5;
-					ray.add(rays.origins[i], rays.origins[i].add(rays.directions[i]));
-
+			function raytrace(){
+				var secondaryRays = [];
+				for(var i=0; i<rays.length; i++){
 					// find ray scene intersections
+					var ray = rays[i];
 					var intersections = ray.getCrossings(circle);
 
 					// get closest intersection of current ray
@@ -111,53 +112,47 @@
 							intersection = intersections[j];
 						}
 					}
+
 					if(intersection){
 						// adjust ray length
 						ray.segments[1].point = intersection.point;
 
-						// reflect
+						// bounce
 						var V0 = ray.segments[1].point.subtract(ray.segments[0].point).normalize();
 						var N = intersection.intersection.normal;
+						var V1 = refract(V0, N, circle.data.ior).normalize();
 
-						var V1;
-
-						V1 = refract(V0, N).normalize();
-
-						// if(V1.
 						if(!V1.isNaN()){
-							secondaryRays.origins.push(intersection.point); //!!! FIX, secondary rays starts on the surface an immidiatelly collide with it.
-							secondaryRays.directions.push(V1.normalize(MaxRayLength));
+							new PAPER.Path.Line({
+								from: intersection.point,
+								to: intersection.point.add( V1.normalize(MaxRayLength) ),
+								strokeColor: [LightColor[0], LightColor[1], LightColor[2],Intensity],
+								parent: raysLayer
+							});
 						}
 					}
 				}
 
-				return secondaryRays;
-				// for(var i=0; i<rays.origins.length; i++){
-				// 	var ray = new PAPER.Path({parent: raysGroup});
-				// 	ray.strokeColor = LightColor;
-				// 	ray.strokeWidth = 1.5;
-				// 	ray.add(rays.origins[i], rays.origins[i].add(rays.directions[i]));
-				// }
-
+				rays = secondaryRays;
 			}
 
 			// Animation Loop
 			PAPER.view.onFrame = function (event){
-				var rays = [];
 				stats.begin();
-				raysGroup.removeChildren();
-				rays = generateInitialRays();
-				rays = raytrace(rays);
-				rays = raytrace(rays);
-				rays = raytrace(rays);
+				generateInitialRays();
+				for(var i=0; i<MaxBounce; i++){
+					raytrace();
+				}
 				stats.end();
 			}
 
 			// SETUP GUI
 			gui = new dat.GUI();
-			gui.add(window, 'SampleCount', 0, 6000);
+			gui.add(window, 'SampleCount', 0, 360);
 			gui.add(window, 'MaxRayLength', 0, 5000);
-			gui.add(window, 'Intensity', 0, 50);
+			gui.add(window, 'MaxBounce', 0, 8);
+			gui.add(window, 'Intensity', 0, 1);
+			gui.add(circle.data, 'ior', 0, 5);
 			gui.addColor(window, 'LightColor');
 
 			for(var layer of PAPER.project.layers){
