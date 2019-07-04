@@ -10,13 +10,6 @@
 			var LightColor = [255,255,255];
 			var Intensity = 7;
 
-			// SETUP GUI
-			gui = new dat.GUI();
-			gui.add(window, 'SampleCount', 0, 6000);
-			gui.add(window, 'MaxRayLength', 0, 5000);
-			gui.add(window, 'Intensity', 0, 50);
-			gui.addColor(window, 'LightColor');
-
 			// setup PAPER
 			paper.install(PAPER);
 			canvas = document.getElementById('myCanvas');
@@ -69,8 +62,11 @@
 			}
 
 			// Raytrace
-			raysGroup = new PAPER.Group();
+			raysGroup = new PAPER.Layer({name: "rays"});
 			raysGroup.locked = true;
+			// raysGroup.visible = false;
+
+
 			function reflect(V, N){
 				return V.subtract(N.multiply(2*V.dot(N)));
 			}
@@ -155,6 +151,17 @@
 				rays = raytrace(rays);
 				rays = raytrace(rays);
 				stats.end();
+			}
+
+			// SETUP GUI
+			gui = new dat.GUI();
+			gui.add(window, 'SampleCount', 0, 6000);
+			gui.add(window, 'MaxRayLength', 0, 5000);
+			gui.add(window, 'Intensity', 0, 50);
+			gui.addColor(window, 'LightColor');
+
+			for(var layer of PAPER.project.layers){
+				gui.add(layer, "visible").name(layer.name ? layer.name : "-layer-");
 			}
 
 			// Add fps statistics
