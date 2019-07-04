@@ -1,15 +1,15 @@
 			var PAPER = {};
 			var canvas;
-			var MaxBounce = 3;
+			var MaxBounce = 5;
 			var MaxRayLength = 2000;
-			var SampleCount = 1200;
+			var SampleCount = 600;
 			var selectAndMoveTool;
 			var raysLayer;
 			var sceneGroup;
 			var circle, ray;
 			var omni;
-			var LightColor = [255,255,255];
-			var Intensity = 0.3;
+			var LightColor = [255,255,128];
+			var Intensity = 100;
 
 			// setup PAPER
 			paper.install(PAPER);
@@ -27,10 +27,11 @@
 			circle = new PAPER.Path.Circle({
 				center: PAPER.view.center,
 				radius: 100,
-				strokeColor: 'white',
+				strokeColor: 'rgba(128, 128, 128, 0.7)',
+				strokeWidth: 3,
 				fillColor: "black",
 				parent: sceneGroup,
-				data:{ior: 1.33}
+				data:{ior: 3.0}
 			});
 
 			// The Lightsource
@@ -78,6 +79,16 @@
 				return V.multiply(r).add( N.multiply(r*c - Math.sqrt( 1-Math.pow(r,2) * (1-Math.pow(c,2) )  )) );
 			}
 
+			function getLightColor(){
+				return new PAPER.Color(LightColor[0]/255, LightColor[1]/255, LightColor[2]/255, Intensity/SampleCount);
+
+				// addative blend mode is too slow for 2d canvas
+				return new PAPER.Color({
+					hue: 360*Math.random(),
+					saturation: 1,
+					brightness: 1,
+					alpha: Intensity});
+			}
 			
 			function generateInitialRays(){
 				rays = [];
@@ -88,7 +99,7 @@
 						from: omni.position,
 						to: omni.position.add(new PAPER.Point(Math.sin(angle)*MaxRayLength, Math.cos(angle)*MaxRayLength)),
 						parent: raysLayer,
-						strokeColor: [LightColor[0], LightColor[1], LightColor[2],Intensity]
+						strokeColor: getLightColor()
 					});
 					rays.push(ray);
 				}
@@ -126,7 +137,7 @@
 							new PAPER.Path.Line({
 								from: intersection.point,
 								to: intersection.point.add( V1.normalize(MaxRayLength) ),
-								strokeColor: [LightColor[0], LightColor[1], LightColor[2],Intensity],
+								strokeColor: getLightColor(),
 								parent: raysLayer
 							});
 						}
@@ -148,10 +159,10 @@
 
 			// SETUP GUI
 			gui = new dat.GUI();
-			gui.add(window, 'SampleCount', 0, 360);
+			gui.add(window, 'SampleCount', 0, 3600);
 			gui.add(window, 'MaxRayLength', 0, 5000);
 			gui.add(window, 'MaxBounce', 0, 8);
-			gui.add(window, 'Intensity', 0, 1);
+			gui.add(window, 'Intensity', 0, 300);
 			gui.add(circle.data, 'ior', 0, 5);
 			gui.addColor(window, 'LightColor');
 
