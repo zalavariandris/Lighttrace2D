@@ -5,42 +5,40 @@
 			var selectAndMoveTool;
 			var raysGroup;
 			var sceneGroup;
-			var vizGroup;
 			var circle, ray;
 			var omni;
 			var LightColor = [255,255,255];
-			var Intensity = 10;
+			var Intensity = 7;
 
+			// SETUP GUI
 			gui = new dat.GUI();
 			gui.add(window, 'SampleCount', 0, 6000);
 			gui.add(window, 'MaxRayLength', 0, 5000);
 			gui.add(window, 'Intensity', 0, 50);
 			gui.addColor(window, 'LightColor');
 
+			// setup PAPER
 			paper.install(PAPER);
 			canvas = document.getElementById('myCanvas');
 			paper.setup(canvas);
 
-			window.onresize = function(event){
+			function resize(){
 				PAPER.view.setViewSize(window.innerWidth, window.innerHeight);
 			}
-			PAPER.view.setViewSize(window.innerWidth, window.innerHeight);
+			window.onresize = resize;
+			resize();
 
+			// Creare Scene with glass Circle
 			sceneGroup = new PAPER.Group();
 			circle = new PAPER.Path.Circle({
 				center: PAPER.view.center,
-				radius: 160,
+				radius: 100,
 				strokeColor: 'white',
 				fillColor: "black",
 				parent: sceneGroup
 			});
 
-			// box = new PAPER.Path.Rectangle(new PAPER.Point(150, 150), new PAPER.Point(500, 500));
-			// box.fillColor = 'black';
-			// box.strokeColor = 'white';
-			// box.parent = sceneGroup;
-
-
+			// The Lightsource
 			omni = new PAPER.Path.Circle({
 				center: new PAPER.Point(100,100),
 				radius: 10,
@@ -48,8 +46,7 @@
 
 			});
 
-			PAPER.view.draw();
-
+			// Select and Move tool
 			selectAndMoveTool = new PAPER.Tool();
 			selectAndMoveTool.onMouseDown = function(event){
 				var hit = PAPER.project.hitTest(event.point);
@@ -71,23 +68,9 @@
 				}
 			}
 
-			vizGroup = new PAPER.Group();
-			function vizIntersection(intersections){
-				vizGroup.removeChildren();
-				for (var i = 0; i < intersections.length; i++) {
-					new PAPER.Path.Circle({
-						center: intersections[i].point,
-						radius: 2,
-						fillColor: "cyan",
-						parent: vizGroup
-					});
-				}
-			}
-
+			// Raytrace
 			raysGroup = new PAPER.Group();
 			raysGroup.locked = true;
-			var allIntersections;
-
 			function reflect(V, N){
 				return V.subtract(N.multiply(2*V.dot(N)));
 			}
@@ -97,7 +80,6 @@
 				var c = N.dot(V);
 				return V.multiply(r).add( N.multiply(r*c - Math.sqrt( 1-Math.pow(r,2) * (1-Math.pow(c,2) )  )) );
 			}
-
 
 			function generateInitialRays(){
 				var rays =  {origins: [], directions: []};
@@ -109,9 +91,7 @@
 				return rays;
 			}
 
-			function raytrace(rays)
-			{
-				allIntersections = [];
+			function raytrace(rays){
 				var secondaryRays = {origins: [], directions: []};
 				for(var i=0; i<rays.origins.length; i++)
 				{
@@ -122,7 +102,7 @@
 					ray.add(rays.origins[i], rays.origins[i].add(rays.directions[i]));
 
 					// find ray scene intersections
-					var intersections = ray.getIntersections(circle);
+					var intersections = ray.getCrossings(circle);
 
 					// get closest intersection of current ray
 					var origin = ray.segments[0].point;
@@ -139,10 +119,6 @@
 						// adjust ray length
 						ray.segments[1].point = intersection.point;
 
-						// gather all rays intersections
-						allIntersections.push(intersection);
-
-
 						// reflect
 						var V0 = ray.segments[1].point.subtract(ray.segments[0].point).normalize();
 						var N = intersection.intersection.normal;
@@ -153,7 +129,7 @@
 
 						// if(V1.
 						if(!V1.isNaN()){
-							secondaryRays.origins.push(intersection.point.add(V1.normalize())); //!!! FIX, secondary rays starts on the surface an immidiatelly collide with it.
+							secondaryRays.origins.push(intersection.point); //!!! FIX, secondary rays starts on the surface an immidiatelly collide with it.
 							secondaryRays.directions.push(V1.normalize(MaxRayLength));
 						}
 					}
@@ -167,22 +143,21 @@
 				// 	ray.add(rays.origins[i], rays.origins[i].add(rays.directions[i]));
 				// }
 
-
-				//vizIntersection(allIntersections);
 			}
 
-			var stats = new Stats();
-			stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
-			document.body.appendChild( stats.dom );
-
-			var rays = [];
+			// Animation Loop
 			PAPER.view.onFrame = function (event){
+				var rays = [];
 				stats.begin();
 				raysGroup.removeChildren();
 				rays = generateInitialRays();
 				rays = raytrace(rays);
 				rays = raytrace(rays);
 				rays = raytrace(rays);
-
 				stats.end();
 			}
+
+			// Add fps statistics
+			var stats = new Stats();
+			stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
+			document.body.appendChild( stats.dom );
