@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script type="text/javascript" src="lib/paper-full.js"></script>
+		<style>
+			body{
+				font-family: futura, arial, sans-serif;
+				margin: 0;
+			}
+			h1{
+				position: fixed;
+				pointer-events: none;
+				z-index: 1;
+			}
+			canvas{
+				position: fixed;
+				top: 0;
+				left: 0;
+				background: black;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>LightTrace2D</h1>
+		<canvas id="myCanvas" resize></canvas>
+
+		<script type="text/javascript">
+			var PAPER = {};
+			var canvas;
+			var MaxRayLength = 1000;
+			var SampleCount = 600;
+			var selectAndMoveTool;
+			var raysGroup;
+			var sceneGroup;
+			var vizGroup;
+			var circle, ray;
+			var omni;
+
+			paper.install(PAPER);
+			canvas = document.getElementById('myCanvas');
+			paper.setup(canvas);
+
+			window.onresize = function(event){
+				PAPER.view.setViewSize(window.innerWidth, window.innerHeight);
+			}
+			PAPER.view.setViewSize(window.innerWidth, window.innerHeight);
+
+			circle = new PAPER.Path.Circle({
+				center: PAPER.view.center,
+				radius: 160,
+				strokeColor: 'black',
+				group: sceneGroup
+			});
+
+			circle.fillColor = 'grey';
+
+			omni = new PAPER.Path.Circle({
+				center: new PAPER.Point(100,100),
+				radius: 10,
+				fillColor: 'orange'
+			});
+
+			PAPER.view.draw();
+
+			selectAndMoveTool = new PAPER.Tool();
+			selectAndMoveTool.onMouseDown = function(event){
+				var hit = PAPER.project.hitTest(event.point);
+				PAPER.project.deselectAll();
+				if(hit){
+					hit.item.selected = true;
+				}else{
+					omni.position = event.point;
+					omni.selected = true;
+				}
+			}
+
+			selectAndMoveTool.onMouseDrag = function(event) {
+				if(PAPER.project.selectedItems.length>0){
+					for(var i=0; i<PAPER.project.selectedItems.length; i++){
+						var item = PAPER.project.selectedItems[i];
+						item.position = item.position.add(event.delta);
+					}
+				}
+			}
+
+			vizGroup = new PAPER.Group();
+			function vizIntersection(intersections){
+				vizGroup.removeChildren();
+				for (var i = 0; i < intersections.length; i++) {
+					new PAPER.Path.Circle({
+						center: intersections[i].point,
+						radius: 2,
+						fillColor: "red",
+						parent: vizGroup
+					});
+				}
+			}
+
+			raysGroup = new PAPER.Group();
+			raysGroup.locked = true;
+			var allIntersections;
+			function raytrace(){
+				allIntersections = [];
+				raysGroup.removeChildren();
+				for(var i=0; i<SampleCount; i++){
+					// add light ray
+					var ray = new PAPER.Path({parent: raysGroup});
+					ray.strokeColor = 'rgba(255,255,0,0.1)';
+					ray.strokeWidth = 1.5;
+					var angle = Math.PI*2/SampleCount*i;
+					ray.add(omni.position, omni.position.add(new PAPER.Point(Math.sin(angle)*MaxRayLength, Math.cos(angle)*MaxRayLength)));
+
+					// find ray scene intersections
+					var intersections = ray.getIntersections(circle);
+
+					// get closest intersection of current ray
+					var origin = ray.segments[0].point;
+					var distance = Infinity;
+					var closestIntersection = null;
+					for (var j = 0; j < intersections.length; j++) {
+						var d = origin.getDistance(intersections[j].point)
+						if(d<distance){
+							distance = d;
+							closestIntersection = intersections[j];
+						}
+					}
+					if(closestIntersection){
+						ray.segments[1].point = closestIntersection.point;
+						allIntersections.push(closestIntersection);
+					}
+				}
+				//vizIntersection(allIntersections);
+			}
+
+			PAPER.view.onFrame = function (event){
+				raytrace();
+			}
+
+
+
+
+		</script>
+	</body>
+</html>
