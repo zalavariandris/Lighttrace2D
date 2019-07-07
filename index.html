@@ -5,26 +5,83 @@
 		<script type="text/javascript" src="lib/paper-full.js"></script>
 		<script type="text/javascript" src="lib/stats.min.js"></script>
 		<script type="text/javascript" src="lib/dat.gui.min.js"></script>
+		<link href="fontawesome/css/all.css" rel="stylesheet">
 		<style>
 			body{
 				font-family: futura, arial, sans-serif;
 				margin: 0;
 			}
+
 			h1{
 				position: fixed;
 				pointer-events: none;
-				z-index: 1;
 			}
+
 			canvas{
 				position: fixed;
 				top: 0;
 				left: 0;
 				background: black;
+				z-index: -1;
 			}
+
+			ul.toolbar{
+				position: fixed;
+				left: 0;
+				top: 0;
+				background-color: white;
+				list-style: none;
+				margin: 0;
+				padding: 10px;
+				margin-top: 100px;
+
+				color: white;
+				background: rgb(50, 50, 50);
+			}
+
+			ul.toolbar button{
+				color: inherit;
+				background: rgb(100, 100, 100);
+				border: none;
+				cursor: pointer;
+			}
+
+			ul.toolbar button:hover{
+				background: darkgrey;
+			}
+
+			.feather {
+			  width: 24px;
+			  height: 24px;
+			  stroke: currentColor;
+			  stroke-width: 2;
+			  stroke-linecap: round;
+			  stroke-linejoin: round;
+			  fill: none;
+			}
+
 		</style>
 	</head>
 	<body>
 		<h1>LightTrace2D</h1>
+
+		<ul class=toolbar>
+			<li>
+				<button title="Select and move" onClick="selectAndMoveTool.activate();">
+					<i class="fa fa-fw fa-mouse-pointer"></i>
+				</button>
+			</li>
+			<li>
+				<button title="Circle" onClick="circleTool.activate();">
+					<i class="fa fa-fw fa-circle"></i>
+				</button>
+			</li>
+			<li>
+				<button title="Lens" onClick="lensTool.activate();">
+					<i class="fa fa-fw fa-ring"></i>
+				</button>
+			</li>
+		</ul>
 		<canvas id="myCanvas"></canvas>
 		<script type="text/javascript" src="js/main.js"></script>
 	</body>
