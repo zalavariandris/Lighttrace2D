@@ -12,10 +12,6 @@ class LensGenerator{
 		
 	}
 	generate(){
-		// if items are removed from a PAPEr group selection is lost.
-		// if group is selected then reselect after
-		var selected = this._group.selected;
-		
 		if(this._right)
 			this._right.remove();
 		if(this._lens)
@@ -40,8 +36,15 @@ class LensGenerator{
 		this._lens.parent = this._group;
 		this._lens.strokeColor = "white";
 		this._lens.strokeWidth = 1;
+	}
 
+	update(){
+				// if items are removed from a PAPEr group selection is lost.
+		// if group is selected then reselect after
+		var selected = this._group.selected;
+		this.generate();
 		if(selected)
 			this._group.selected = selected;
+
 	}
 }

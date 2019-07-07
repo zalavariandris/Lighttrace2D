@@ -1,0 +1,43 @@
+body{
+	font-family: futura, arial, sans-serif;
+	margin: 0;
+	background: blue;
+}
+
+h1{
+	position: fixed;
+	pointer-events: none;
+}
+
+canvas{
+	position: fixed;
+	top: 0;
+	left: 0;
+	background: black;
+	z-index: -1;
+}
+
+ul.toolbar{
+	position: fixed;
+	left: 0;
+	top: 0;
+	background-color: white;
+	list-style: none;
+	margin: 0;
+	padding: 10px;
+	margin-top: 100px;
+
+	color: white;
+	background: rgb(50, 50, 50);
+}
+
+ul.toolbar button{
+	color: inherit;
+	background: rgb(100, 100, 100);
+	border: none;
+	cursor: pointer;
+}
+
+ul.toolbar button:hover{
+	background: darkgrey;
+}
