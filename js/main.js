@@ -2,7 +2,7 @@ var PAPER = {};
 var canvas;
 var MaxBounces = 5;
 var MaxRayLength = 2000;
-var SampleCount = 320;
+var SampleCount = 32;
 var selectAndMoveTool;
 var circleTool;
 var rectangleTool;
@@ -97,6 +97,7 @@ function initTools(){
 				omni.position = event.point;
 				omni.selected = true;
 			}
+			reset = true;
 		},
 		onMouseDrag: function(event) {
 			for(var item of PAPER.project.selectedItems){
@@ -105,6 +106,7 @@ function initTools(){
 				if(item.data.generator)
 					item.data.generator.position = item.data.generator.position.add(event.delta);
 			}
+			reset = true;
 		},
 		onKeyDown: function(event){
 			if(event.event.srcElement.tagName != "INPUT"){ //!!! temporary fix for bubbling keyboard events
@@ -222,6 +224,30 @@ function refract(V, N, ior=1.333){
 		return V.multiply(r).add( N.multiply(r*c + Math.sqrt( 1-Math.pow(r,2) * (1-Math.pow(c,2) )  )) );
 	}
 }
+
+function randn_bm(min, max, skew) {
+    var u = 0, v = 0;
+    while(u === 0) u = Math.random(); //Converting [0,1) to (0,1)
+    while(v === 0) v = Math.random();
+    let num = Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
+
+    num = num / 10.0 + 0.5; // Translate to 0 -> 1
+    if (num > 1 || num < 0) num = randn_bm(min, max, skew); // resample between 0 and 1 if out of range
+    num = Math.pow(num, skew); // Skew
+    num *= max - min; // Stretch to fill range
+    num += min; // offset to min
+    return num;
+}
+
+function sampleBSDF(V, N, material = {}){
+	var roughness = material.roughness | 0.0;
+	var diffuse = material.diffuse | new THREE.Color("grey");
+	var transparency = material.transparency | 0.0;
+
+
+	return V.subtract(N.multiply(2*V.dot(N)));
+}
+
 
 function getRayColor(){
 	return new PAPER.Color(RayColor[0]/255, RayColor[1]/255, RayColor[2]/255, Intensity/SampleCount);

@@ -38,6 +38,7 @@ var rayShaderMaterial;
 var renderer;
 var raysMesh;
 
+
 function init(){
 	var canvas = document.getElementById("three");
 	renderer = new THREE.WebGLRenderer({canvas: canvas, alpha: true});
@@ -147,7 +148,7 @@ var tonemapperFragmentShader = `
   uniform sampler2D map;
   void main() {
     vec4 texel = texture2D(map, vUv);
-    gl_FragColor = texel * factor;
+    gl_FragColor = texel/factor;
   }
 `
 
@@ -237,18 +238,21 @@ var textureComp;
 
 var compCamera;
 var mergeScene;
-
+var tonemapperScene;
+var tonerMaterial;
+var plateGeometry;
 function initRenderPasses(){
 	//
 	textureOld = createRenderTarget();
 	textureNew = createRenderTarget();
 	textureComp = createRenderTarget();
+	tonemapperInputFbo = createRenderTarget();
 
 	// merge pass
-	var plateGeometry = new THREE.PlaneBufferGeometry( 2, 2 );
+	plateGeometry = new THREE.PlaneBufferGeometry( 2, 2 );
 	compCamera = new THREE.OrthographicCamera(-1, 1, -1, 1, -10, 10);
 	compCamera.position.z = -1;
-	// compCamera.rotation.set(0,Math.PI, 0);
+	compCamera.rotation.set(0, Math.PI, Math.PI);
 	
 	var mergeMaterial = new THREE.ShaderMaterial({
 		uniforms:{
@@ -257,22 +261,41 @@ function initRenderPasses(){
 		},
 		vertexShader: mergeVertexShader,
 		fragmentShader: mergeFragmentShader,
-		transparent: true
+		transparent: false,
+		depthTest: false,
 	});
 
 	var quadMerge = new THREE.Mesh(plateGeometry, mergeMaterial);
-	quadMerge.scale.set(1,1,-1);
+	// quadMerge.scale.set(1,1,-1);
 	mergeScene = new THREE.Scene();
 	mergeScene.add(quadMerge);
 
 	// screen pass
 	var screenMaterial = new THREE.MeshBasicMaterial({color: 'white', map: textureComp.texture});
 	var quadScreen = new THREE.Mesh(plateGeometry, screenMaterial);
-	quadScreen.scale.set(1,1,-1);
+	// quadScreen.scale.set(1,1,-1);
 	sceneScreen = new THREE.Scene();
 	sceneScreen.add(quadScreen);
+
+	// divide final image with pass count
+	tonerMaterial = new THREE.ShaderMaterial({
+		uniforms:{
+			factor: {value: 1},
+			map: {value: tonemapperInputFbo.texture}
+		},
+		vertexShader: tonemapperVertexShader,
+		fragmentShader: tonemapperFragmentShader,
+		transparent: false,
+		depthTest: false
+	});
+	var quadToner = new THREE.Mesh(plateGeometry, tonerMaterial);
+	tonemapperScene = new THREE.Scene();
+	tonemapperScene.add(quadToner);
+
 }
 
+var i=0;
+var reset = false;
 function renderPasses(){
   // draw
   renderer.setRenderTarget(textureNew);
@@ -281,22 +304,37 @@ function renderPasses(){
   renderer.setRenderTarget(textureComp);
   renderer.render(mergeScene, compCamera);
 
+  if(reset){
+		renderer.setRenderTarget(textureOld);
+		renderer.clear();
+		i=0;
+		reset = false;
+  }else{
+
   renderer.setRenderTarget(textureOld);
   renderer.render(sceneScreen, compCamera);
 
-  renderer.setRenderTarget(null)
+  }
+
+  renderer.setRenderTarget(tonemapperInputFbo)
   renderer.render(sceneScreen, compCamera);
+
+  renderer.setRenderTarget(null)
+  renderer.render(tonemapperScene, compCamera);
 }
 
 initRenderPasses();
 
 // main render loop
-var i=0;
+
+
 function render() {
 	// rayShaderMaterial.uniforms.opacity.value = Intensity/SampleCount;
-	i++;
+	
 	updateContentGeometry();
+	tonerMaterial.uniforms.factor.value=i;
 	renderPasses();
+	i++;
 	// render passes
 
 
