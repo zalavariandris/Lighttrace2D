@@ -1,7 +1,7 @@
 body{
 	font-family: futura, arial, sans-serif;
 	margin: 0;
-	background: blue;
+	background: black;
 }
 
 h1{
@@ -13,7 +13,7 @@ canvas{
 	position: fixed;
 	top: 0;
 	left: 0;
-	background: black;
+	/*background: black;*/
 	z-index: -1;
 }
 
@@ -40,4 +40,12 @@ ul.toolbar button{
 
 ul.toolbar button:hover{
 	background: darkgrey;
+}
+
+canvas#three{
+	position: fixed;
+	top: 0;
+	left: 0;
+	background: black;
+	z-index: -2;
 }

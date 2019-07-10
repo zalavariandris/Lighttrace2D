@@ -2,7 +2,7 @@ var PAPER = {};
 var canvas;
 var MaxBounces = 5;
 var MaxRayLength = 2000;
-var SampleCount = 60;
+var SampleCount = 320;
 var selectAndMoveTool;
 var circleTool;
 var rectangleTool;
@@ -10,10 +10,16 @@ var raysLayer;
 var sceneLayer;
 var circle, ray;
 var omni;
-var LightColor = [255,255,128];
-var Intensity = 100;
+var RayColor = [255,255,128];
+var Intensity = 7;
 var Pendulum = false;
-var IOR = 1.333;
+var PendulumSpeed = 1.0;
+var PendulumRadius = 200;
+var IOR = 3;
+var GlassColor = "rgba(0,0,0,0.001)";
+
+var Sampling = "random";
+
 
 // setup PAPER
 function initPAPER(){
@@ -24,7 +30,7 @@ function initPAPER(){
 	function resize(){
 		PAPER.view.setViewSize(window.innerWidth, window.innerHeight);
 	}
-	window.onresize = resize;
+	window.addEventListener('resize', resize);
 	resize();
 }
 
@@ -36,28 +42,45 @@ function setupLayers(){
 		name: "scene",
 		strokeColor: 'rgba(128, 128, 128, 0.7)',
 		strokeWidth: 3,
-		fillColor: "rgba(0,0,0,0.3)"
+		fillColor: GlassColor
 	});
 
 	lightLayer = new PAPER.Layer({
 		name: "lights"
 	});
+
+	raysLayer = new PAPER.Layer({
+		name: "rays",
+		locked: true,
+		visible: false
+	});
+
+	debugLayer = new PAPER.Layer({
+		name: "debug",
+		locked: true,
+		visible: false
+	});
 }
 setupLayers();
 
+var lights;
 function initDefaultScene(){
+	lights = [];
 	omni = new PAPER.Path.Circle({
 		center: new PAPER.Point(100,PAPER.view.center.y),
-		radius: 10,
-		fillColor: 'orange',
-		parent: PAPER.project.layers['lights']
+		radius: 30,
+		strokeColor: 'rgba(255, 150, 0, 1)',
+		parent: PAPER.project.layers['lights'],
+		data: {
+			type: "omni"
+		}
 	});
-
+	lights.push(omni);
 	new PAPER.Path.Circle({
 		center: PAPER.view.center,
 		radius: 150,
 		parent: PAPER.project.layers['scene'],
-		fillColor: "rgba(0,0,0,0.3)",
+		fillColor: GlassColor,
 		strokeColor: 'rgba(128, 128, 128, 0.7)'
 	});
 }
@@ -106,7 +129,7 @@ function initTools(){
 				center: event.downPoint,
 				radius: scale,
 				strokeColor: 'rgba(128, 128, 128, 0.7)',
-				fillColor: "rgba(0,0,0,0.3)",
+				fillColor: GlassColor,
 				strokeWidth: 3,
 				parent: sceneLayer
 			});
@@ -131,7 +154,7 @@ function initTools(){
 
 			this.lens = new PAPER.Path({
 				strokeColor: 'rgba(128, 128, 128, 0.7)',
-				fillColor: "rgba(0,0,0,0.3)",
+				fillColor: GlassColor,
 				strokeWidth: 3,
 				parent: sceneLayer
 			});
@@ -183,7 +206,6 @@ initTools();
 /*
  * RAYTRACE
  */
-
 function reflect(V, N){
 	return V.subtract(N.multiply(2*V.dot(N)));
 }
@@ -201,8 +223,8 @@ function refract(V, N, ior=1.333){
 	}
 }
 
-function getLightColor(){
-	return new PAPER.Color(LightColor[0]/255, LightColor[1]/255, LightColor[2]/255, Intensity/SampleCount);
+function getRayColor(){
+	return new PAPER.Color(RayColor[0]/255, RayColor[1]/255, RayColor[2]/255, Intensity/SampleCount);
 
 	// addative blend mode is too slow for 2d canvas
 	return new PAPER.Color({
@@ -212,12 +234,6 @@ function getLightColor(){
 		alpha: Intensity
 	});
 }
-
-raysLayer = new PAPER.Layer({name: "rays"});
-raysLayer.locked = true;
-debugLayer = new PAPER.Layer({name: "debug"});
-debugLayer.locked = true;
-debugLayer.visible = false;
 
 function getDescendants(items, l=[]){
 	for(var item of items){
@@ -234,23 +250,36 @@ function createRay(origin, direction){
 		from: origin,
 		to: origin.add(direction),
 		parent: raysLayer,
-		strokeColor: getLightColor(),
+		strokeColor: getRayColor(),
 		data: {
 			intersection: null
 		}
 	});
 }
 
-function raytrace(){
+	function raytrace(){
 	raysLayer.removeChildren();
 	debugLayer.removeChildren();
 	// generate initial rays
 	var rays = [];
-	for(var i=0; i<SampleCount; i++){
-		var angle = Math.PI*2/SampleCount*i;
-		var dir = new PAPER.Point(Math.sin(angle)*MaxRayLength, Math.cos(angle)*MaxRayLength);
-		var ray = createRay(omni.position, dir);
-		rays.push(ray);
+	for(var light of lights){
+		for(var i=0; i<SampleCount; i++){
+			if(light.data.type=="omni"){
+				var angle;
+				if(Sampling=="uniform"){
+					angle = Math.PI*2/SampleCount*i;
+				}
+				if(Sampling=="random"){
+					angle = Math.PI*2*Math.random();// random sampling
+				}	
+				var dir = new PAPER.Point(Math.sin(angle)*MaxRayLength, Math.cos(angle)*MaxRayLength);
+				var ray = createRay(omni.position, dir);
+				rays.push(ray);
+			}
+			if(light.type=="directional"){
+
+			}
+		}
 	}
 
 	// trace lightrays
@@ -294,12 +323,20 @@ function raytrace(){
 		// Debug intersection points
 		for(var ray of rays){
 			if(ray.data.intersection){
-				var triangle = new PAPER.Path();
-				triangle.add(new PAPER.Point(-2, 0), new PAPER.Point(0, 10), new PAPER.Point(2, 0));
-				triangle.parent = debugLayer;
-				triangle.position = ray.data.intersection.point.add(ray.data.intersection.intersection.normal.normalize(5));
-				triangle.fillColor = "cyan";
-				triangle.rotation = ray.data.intersection.intersection.normal.angle-90;
+				var normal = ray.data.intersection.intersection.normal.normalize()
+				var position = ray.data.intersection.point;
+				var angle = ray.data.intersection.intersection.normal.angle-90;
+
+				var arrowHead = new PAPER.Path();
+				var headSize = 8;
+				arrowHead.add(new PAPER.Point(-headSize/2, 0), new PAPER.Point(0, headSize), new PAPER.Point(headSize/2, 0));
+				arrowHead.parent = debugLayer;
+				arrowHead.position = position.add(normal.multiply(15));
+				arrowHead.fillColor = "lime";
+				arrowHead.rotation = angle;
+
+				var arrowBody = new PAPER.Path.Line(position, position.add(normal.multiply(10)));
+				arrowBody.strokeColor = "lime";
 			}
 		}
 
@@ -332,16 +369,18 @@ function raytrace(){
 }
 
 // SETUP GUI
-function initGui(){
+(function initGui(){
 	gui = new dat.GUI();
+
 	var raytraceFolder = gui.addFolder('Raytrace');
+	raytraceFolder.add(window, "Sampling", ["uniform", "random"]);
 	raytraceFolder.add(window, 'SampleCount', 0, 3600).step(1);
 	raytraceFolder.add(window, 'MaxRayLength', 0, 5000);
 	raytraceFolder.add(window, 'MaxBounces', 0, 8).step(1);
 	raytraceFolder.open();
 	var lightFolder = gui.addFolder("Light");
 	lightFolder.add(window, 'Intensity', 0, 300);
-	lightFolder.addColor(window, 'LightColor');
+	lightFolder.addColor(window, 'RayColor');
 	lightFolder.open();
 	var materialFolder = gui.addFolder("Material");
 	materialFolder.add(window, 'IOR', 0, 5);
@@ -355,18 +394,19 @@ function initGui(){
 
 	var animFolder = gui.addFolder("Animation");
 	animFolder.add(window, 'Pendulum');
+	animFolder.add(window, 'PendulumSpeed', 0, 2).name("speed");
+	animFolder.add(window, "PendulumRadius", 0, 1000).name("radius");
 	animFolder.open();
-};
-initGui();
+}());
 
 // Add fps statistics
 var stats;
-function initStats(){
+(function(){
 	stats = new Stats();
 	stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
 	document.body.appendChild( stats.dom );
-}
-initStats();
+})();
+// initStats();
 
 // Animation Loop
 PAPER.view.onFrame = function (event){
@@ -375,9 +415,10 @@ PAPER.view.onFrame = function (event){
 	// RAYTRACE
 	raytrace();
 	
-
 	if(Pendulum){
-		omni.position.x = Math.sin(new Date().getTime()*0.001*0.3)*window.innerWidth/2+window.innerWidth/2;
+		var pivot = PAPER.view.center;
+		omni.position.x = Math.cos(new Date().getTime()*0.001*PendulumSpeed)*PendulumRadius+pivot.x;
+		omni.position.y = Math.sin(new Date().getTime()*0.001*PendulumSpeed)*PendulumRadius+pivot.y;
 	}
 
 	stats.end();

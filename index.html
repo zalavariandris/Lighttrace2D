@@ -5,11 +5,46 @@
 		<script type="text/javascript" src="lib/paper-full.js"></script>
 		<script type="text/javascript" src="lib/stats.min.js"></script>
 		<script type="text/javascript" src="lib/dat.gui.min.js"></script>
+		<script type="text/javascript" src="lib/three.min.js"></script>
 		<link href="fontawesome/css/all.css" rel="stylesheet">
 		<link href="css/style.css" rel="stylesheet">
-
 	</head>
 	<body>
+		<script type="x-shader/x-vertex" id="vertexshader">
+
+			uniform float amplitude;
+
+			attribute vec3 displacement;
+			attribute vec3 customColor;
+
+			varying vec3 vColor;
+
+			void main() {
+
+				vec3 newPosition = position + amplitude * displacement;
+
+				vColor = customColor;
+
+				gl_Position = projectionMatrix * modelViewMatrix * vec4( newPosition, 1.0 );
+
+			}
+
+		</script>
+
+		<script type="x-shader/x-fragment" id="fragmentshader">
+
+			uniform vec3 color;
+			uniform float opacity;
+
+			varying vec3 vColor;
+
+			void main() {
+
+				gl_FragColor = vec4( vColor * color, opacity );
+
+			}
+
+		</script>
 		<h1>LightTrace2D</h1>
 		<ul class='toolbar' id='toolbar'>
 			<li>
@@ -29,6 +64,8 @@
 			</li>
 		</ul>
 		<canvas id="paper"></canvas>
+		<canvas id="three"></canvas>
 		<script type="text/javascript" src="js/main.js"></script>
+		<script type="text/javascript" src="js/renderer.js"></script>
 	</body>
 </html>
