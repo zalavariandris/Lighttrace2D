@@ -1,5 +1,4 @@
-
-var rayVertexShader = `
+const rayVertexShader = `
 	varying vec3 vColor;
 	varying vec3 vN;
 	varying float vBias;
@@ -20,7 +19,7 @@ var rayVertexShader = `
     }
 `;
 
-var rayFragmentShader = `
+const rayFragmentShader = `
     varying vec3 vColor;
     varying float vBias;
 	uniform float opacity;
@@ -31,19 +30,22 @@ var rayFragmentShader = `
 `;
 
 // setup ThreeJS
-var contentScene; // contains rays
-var viewportCamera;
-var rayShaderMaterial;
+let contentScene; // contains rays
+let viewportCamera;
+let rayShaderMaterial;
 
-var renderer;
-var raysMesh;
+let renderer = {
+	renderer: null // threejs webgl renderer
+}
 
+function initThree(){
+	// setup threejs renderer
+	const canvas = document.getElementById("three");
+	renderer.renderer = new THREE.WebGLRenderer({canvas: canvas, alpha: true});
+	renderer.renderer.setPixelRatio(window.devicePixelRatio);
+	renderer.renderer.setSize(window.innerWidth, window.innerHeight);
 
-function init(){
-	var canvas = document.getElementById("three");
-	renderer = new THREE.WebGLRenderer({canvas: canvas, alpha: true});
-	renderer.setPixelRatio(window.devicePixelRatio);
-	renderer.setSize(window.innerWidth, window.innerHeight);
+	// create scene
 	viewportCamera = new THREE.OrthographicCamera(0, window.innerWidth, 0, window.innerHeight, 0, 1000);
 	contentScene = new THREE.Scene();
 
@@ -60,59 +62,23 @@ function init(){
 		transparent: true,
 		vertexColors: THREE.VertexColors
 	});
-	updateContentGeometry();
 }
 
 function resize(){
-	viewportCamera.aspect = window.innerWidth / window.innerHeight;
+	// viewportCamera.aspect = window.innerWidth / window.innerHeight;
+	viewportCamera.right = window.innerWidth;
+	viewportCamera.bottom = window.innerHeight;
     viewportCamera.updateProjectionMatrix();
-    renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.renderer.setSize( window.innerWidth, window.innerHeight );
+    reset=true;
 }
 window.addEventListener('resize', resize);
 
-function updateContentGeometry(){
-	// Reset and populate attributes
-	var positions = [];
-	var normals = [];
-	var colors = [];
-	for ( var ray of PAPER.project.layers['rays'].children) {
-		var A = ray.segments[0].point;
-		var B = ray.segments[1].point;
-		var N = B.subtract(A).normalize(1);
-		if(!A.isNaN() && !B.isNaN()){
-			// positions
-			positions.push( A.x, A.y, 0 );
-			positions.push( B.x, B.y, 0 );
-
-			// normals
-			normals.push(N.x, N.y, 0);
-			normals.push(N.x, N.y, 0);
-
-			// colors
-			colors.push( 1,1,1 );
-			colors.push( 1,1,1 );
-		}
-	}
-
-	// Create buffer geometry
-	rayGeometry = new THREE.BufferGeometry();
-	rayGeometry.addAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3 ) );
-	rayGeometry.addAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
-	rayGeometry.addAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
-
-	// Create mesh, and replace in scene
-	if(raysMesh)
-		contentScene.remove(raysMesh);
-	raysMesh = new THREE.LineSegments( rayGeometry, rayShaderMaterial );
-	contentScene.add( raysMesh );
-}
-
-init();
 
 /* ===========================
  *       Render Passes
    ===========================  */
-var mergeVertexShader = `
+const mergeVertexShader = `
   varying vec2 vUv;
 
   void main() {
@@ -121,7 +87,7 @@ var mergeVertexShader = `
   }
 `
 
-var mergeFragmentShader = `
+const mergeFragmentShader = `
   uniform sampler2D texA;
   uniform sampler2D texB;
   varying vec2 vUv;
@@ -133,7 +99,7 @@ var mergeFragmentShader = `
   }
 `
 
-var tonemapperVertexShader = `
+const tonemapperVertexShader = `
   varying vec2 vUv;
 
   void main() {
@@ -142,7 +108,7 @@ var tonemapperVertexShader = `
   }
 `
 
-var tonemapperFragmentShader = `
+const tonemapperFragmentShader = `
   varying vec2 vUv;
   uniform float factor;
   uniform sampler2D map;
@@ -151,20 +117,6 @@ var tonemapperFragmentShader = `
     gl_FragColor = texel/factor;
   }
 `
-
-var compCamera;
-var compScene; // contains old and new frame
-var screenScene; // final composited frames on a quad
-var tonemapperScene;
-var compInputAFbo; // containt composited frames frames
-var compInputBFbo;
-var tonemapperInputFbo;
-var screenInputFbo; // contains previous frame rendered on screen
-var compShaderMaterial;
-var tonemapperShaderMaterial;
-var screenMaterial;
-
-
 
 function createRenderTarget(){
 	return new THREE.WebGLRenderTarget(window.innerWidth*devicePixelRatio , window.innerHeight*devicePixelRatio,
@@ -177,76 +129,21 @@ function createRenderTarget(){
 	);
 }
 
-
-{
-	// compInputAFbo = createRenderTarget();
-
-	// compInputBFbo = createRenderTarget();
-
-	// compCamera = new THREE.OrthographicCamera(-1, 1, -1, 1, 0, 1000);
-	// var plateGeometry = new THREE.PlaneBufferGeometry( 2, 2 );
-	// compShaderMaterial = new THREE.ShaderMaterial({
-	// 	uniforms:{
-	// 		tOld: {value: compInputAFbo.texture},
-	// 		tNew: {value: compInputBFbo.texture}
-	// 	},
-	// 	vertexShader: compVertexShader,
-	// 	fragmentShader: compFragmentShader
-	// });
-
-	// plate = new THREE.Mesh(plateGeometry, compShaderMaterial);
-	// plate.scale.set(1,1,-1);
-
-	// compScene = new THREE.Scene();
-	// compScene.add(plate)
-
-
-	// // Create tonamepper scene ()
-	// tonemapperInputFbo = createRenderTarget();
-	// tonemapperScene = new THREE.Scene();
-	// var tonemapperGeo = new THREE.PlaneBufferGeometry(2, 2);
-	// tonemapperShaderMaterial = new THREE.ShaderMaterial({
-	// 	uniforms: {
-	// 		map: {value: tonemapperInputFbo.texture},
-	// 		factor: {value: 1.0}
-	// 	},
-	// 	vertexShader: tonemapperVertexShader,
-	// 	fragmentShader: tonemapperFragmentShader
-	// });
-	// var tonemapperMesh = new THREE.Mesh(tonemapperGeo, tonemapperShaderMaterial);
-	// tonemapperMesh.scale.set(1,1,-1);
-	// tonemapperScene.add(tonemapperMesh);
-	
-
-	// // Create screen scene (renders to screen, and screenFbo)
-	// screenInputFbo = createRenderTarget();
-	// screenScene = new THREE.Scene();
-	// var screenGeo = new THREE.PlaneBufferGeometry(2,2);
-	// screenMaterial = new THREE.MeshBasicMaterial({
-	// 	color: "white",
-	// 	map: screenInputFbo.texture
-	// });
-	// var screenMesh = new THREE.Mesh(screenGeo, screenMaterial);
-	// screenMesh.scale.set(1,1,-1);
-	// screenScene.add(screenMesh);
-}
-
+var compCamera;
 
 var textureNew;
 var textureOld;
 var textureComp;
 
-var compCamera;
 var mergeScene;
 var tonemapperScene;
 var tonerMaterial;
-var plateGeometry;
+var plateGeometry;``
 function initRenderPasses(){
 	//
 	textureOld = createRenderTarget();
 	textureNew = createRenderTarget();
 	textureComp = createRenderTarget();
-	tonemapperInputFbo = createRenderTarget();
 
 	// merge pass
 	plateGeometry = new THREE.PlaneBufferGeometry( 2, 2 );
@@ -254,7 +151,7 @@ function initRenderPasses(){
 	compCamera.position.z = -1;
 	compCamera.rotation.set(0, Math.PI, Math.PI);
 	
-	var mergeMaterial = new THREE.ShaderMaterial({
+	const mergeMaterial = new THREE.ShaderMaterial({
 		uniforms:{
 			texA: {value: textureOld.texture},
 			texB: {value: textureNew.texture}
@@ -265,14 +162,14 @@ function initRenderPasses(){
 		depthTest: false,
 	});
 
-	var quadMerge = new THREE.Mesh(plateGeometry, mergeMaterial);
+	const quadMerge = new THREE.Mesh(plateGeometry, mergeMaterial);
 	// quadMerge.scale.set(1,1,-1);
 	mergeScene = new THREE.Scene();
 	mergeScene.add(quadMerge);
 
 	// screen pass
-	var screenMaterial = new THREE.MeshBasicMaterial({color: 'white', map: textureComp.texture});
-	var quadScreen = new THREE.Mesh(plateGeometry, screenMaterial);
+	const screenMaterial = new THREE.MeshBasicMaterial({color: 'white', map: textureComp.texture});
+	const quadScreen = new THREE.Mesh(plateGeometry, screenMaterial);
 	// quadScreen.scale.set(1,1,-1);
 	sceneScreen = new THREE.Scene();
 	sceneScreen.add(quadScreen);
@@ -281,111 +178,52 @@ function initRenderPasses(){
 	tonerMaterial = new THREE.ShaderMaterial({
 		uniforms:{
 			factor: {value: 1},
-			map: {value: tonemapperInputFbo.texture}
+			map: {value: textureComp.texture}
 		},
 		vertexShader: tonemapperVertexShader,
 		fragmentShader: tonemapperFragmentShader,
 		transparent: false,
 		depthTest: false
 	});
-	var quadToner = new THREE.Mesh(plateGeometry, tonerMaterial);
+	const quadToner = new THREE.Mesh(plateGeometry, tonerMaterial);
 	tonemapperScene = new THREE.Scene();
 	tonemapperScene.add(quadToner);
-
 }
 
-var i=0;
-var reset = false;
+let iterationCounter=0;
+let reset = false;
+
+function renderPass(shader, target){
+	let scene = new THREE.Scene();
+	let camera = new THREE.OrthographicCamera();
+
+
+	renderer.renderer.setRenderTarget(target);
+	renderer.render(scene, camera);
+}
+
 function renderPasses(){
   // draw
-  renderer.setRenderTarget(textureNew);
-  renderer.render(contentScene, viewportCamera);
+  renderer.renderer.setRenderTarget(textureNew);
+  renderer.renderer.render(contentScene, viewportCamera);
 
-  renderer.setRenderTarget(textureComp);
-  renderer.render(mergeScene, compCamera);
+  renderer.renderer.setRenderTarget(textureComp);
+  renderer.renderer.render(mergeScene, compCamera);
 
   if(reset){
-		renderer.setRenderTarget(textureOld);
-		renderer.clear();
-		i=0;
+		renderer.renderer.setRenderTarget(textureOld);
+		renderer.renderer.clear();
+		iterationCounter=0;
 		reset = false;
   }else{
-
-  renderer.setRenderTarget(textureOld);
-  renderer.render(sceneScreen, compCamera);
-
+	  renderer.renderer.setRenderTarget(textureOld);
+	  renderer.renderer.render(sceneScreen, compCamera);
   }
 
-  renderer.setRenderTarget(tonemapperInputFbo)
-  renderer.render(sceneScreen, compCamera);
-
-  renderer.setRenderTarget(null)
-  renderer.render(tonemapperScene, compCamera);
+  // render final **fluence**
+  renderer.renderer.setRenderTarget(null)
+  renderer.renderer.render(tonemapperScene, compCamera);
 }
 
+initThree();
 initRenderPasses();
-
-// main render loop
-
-
-function render() {
-	// rayShaderMaterial.uniforms.opacity.value = Intensity/SampleCount;
-	
-	updateContentGeometry();
-	tonerMaterial.uniforms.factor.value=i;
-	renderPasses();
-	i++;
-	// render passes
-
-
-	// render rays to fbo
-	// renderer.setRenderTarget(contentOutputFbo);
-	// renderer.render( contentScene, viewportCamera );
-
-	// renderer.setRenderTarget(compFbo);
-	// renderer.render( compScene, compCamera);
-
-	// renderer.setRenderTarget(compInputBFbo);
-	// renderer.render( compScene, compCamera);
-
-
-
-	// // render composite texture to screen
-	// renderer.setRenderTarget(screenInputFbo);
-	// renderer.render(tonemapperScene, compCamera);
-
-	// render screen plate
-	// screenMaterial.map = contentOutputFbo;
-	// renderer.setRenderTarget(null);
-	// renderer.render(contentScene , viewportCamera)
-
-	requestAnimationFrame( render );
-}
-render();
-
-
-// additional render gui
-// gui.add(tonemapperShaderMaterial.uniforms.factor, 'value', 0, 10).name('brightness');
-// function tonemapper(map, options = {}){
-// 	// 
-// 	var scene new THREE.Scene();
-// 	var geo = new THREE.PlaneBufferGeometry(2,2);
-// 	var shaderMaterial = new THREE.ShaderMaterial({
-// 		uniforms: {
-// 			map: {value: map}
-// 			factor: {value: options.factor | 1.0}
-// 		}
-// 	});
-// 	var mesh = new THREE.Mesh(geo, shaderMaterial);
-// 	return scene;
-// }
-
-// render(contentScene, with: viewportCamera, to: contentFbo);
-// render(tonemapper(contentFbo, {factor: 1.0}), with: compCamera, )
-
-
-
-
-
-
-

@@ -48,24 +48,33 @@
 		<h1>LightTrace2D</h1>
 		<ul class='toolbar' id='toolbar'>
 			<li>
-				<button title="Select and move" onClick="selectAndMoveTool.activate();">
+				<button data-tool="selectAndMoveTool" title="Select and move">
 					<i class="fa fa-fw fa-mouse-pointer"></i>
 				</button>
 			</li>
 			<li>
-				<button title="Circle" onClick="circleTool.activate();">
+				<button data-tool="circleTool" title="Circle">
 					<i class="fa fa-fw fa-circle"></i>
 				</button>
 			</li>
 			<li>
-				<button title="Lens" onClick="lensTool.activate();">
+				<button data-tool="lensTool" title="Lens">
 					<i class="fa fa-fw fa-ring"></i>
+				</button>
+			</li>
+			<li>
+				<button data-tool="rectTool" title="Rectangle">
+					<i class="fa fa-fw fa-square"></i>
 				</button>
 			</li>
 		</ul>
 		<canvas id="paper"></canvas>
 		<canvas id="three"></canvas>
-		<script type="text/javascript" src="js/main.js"></script>
+		<script type="text/javascript" src="js/raytracer.js"></script>
+		<script type="text/javascript" src="js/ToolStack.js"></script>
 		<script type="text/javascript" src="js/renderer.js"></script>
+		<script type="text/javascript" src="js/main.js"></script>
+		
+		
 	</body>
 </html>

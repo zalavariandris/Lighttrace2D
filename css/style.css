@@ -38,8 +38,15 @@ ul.toolbar button{
 	cursor: pointer;
 }
 
+ul.toolbar button:focus{
+	outline: none;
+}
 ul.toolbar button:hover{
 	background: darkgrey;
+}
+
+ul.toolbar button.active{
+	outline: 1px white solid;
 }
 
 canvas#three{
