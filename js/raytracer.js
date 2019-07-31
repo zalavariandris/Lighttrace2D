@@ -3,7 +3,7 @@ var PAPER = {};
 var raytracer = {
 	MaxBounces: 3,
 	MaxRayLength: 2000,
-	SampleCount: 30,
+	SampleCount: 60,
 	Sampling: "random",
 
 	raysLayer: null,
@@ -58,13 +58,13 @@ function initRaytracer(){
 function initSampleScene(){
 	raytracer.lights = [];
 	var omni = new PAPER.Path.Circle({
-		center: new PAPER.Point(100,PAPER.view.size.height*3/7),
+		center: new PAPER.Point(100,PAPER.view.center.y),
 		radius: 30,
 		fillColor: "rgba(0,0,0,0.001)",
 		strokeColor: 'rgba(255, 150, 0, 1)',
 		parent: PAPER.project.layers['lights'],
 		data: {
-			light: 'directional' // omni | laser | spot | directional | object
+			light: 'omni' // omni | laser | spot | directional | object
 		}
 	});
 	raytracer.lights.push(omni);
@@ -76,10 +76,7 @@ function initSampleScene(){
 		fillColor: "rgba(0,0,0,0.001)",
 		strokeColor: 'rgba(128, 128, 128, 0.7)',
 		data: {
-			material: {
-				'transparency': 0.0,
-				'roughness': 0.0
-			}
+			material: 'transparent'
 		},
 		selected: true
 	});
@@ -119,12 +116,12 @@ function getDescendantItems(root) {
 }
 
 function createRay(origin, direction, intensity=1.0){
-	var rayColor = new PAPER.Color(1, 1, 0.5, intensity/raytracer.SampleCount);
+	var rayColor = new PAPER.Color(255, 255, 0.5, intensity/raytracer.SampleCount);
 	return new PAPER.Path.Line({
 		from: origin,
 		to: origin.add(direction),
 		parent: raytracer.raysLayer,
-		strokeColor: rayColor,
+		strokeColor: 'rgba(255, 255, 128, 1)',
 		data: {
 			intersection: null
 		}

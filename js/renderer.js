@@ -218,8 +218,8 @@ function renderPasses(){
 
 	accumulatePass.render();
 	if(reset){
-		copyPass.renderer.setRenderTarget(copyPass.target);
-		copyPass.renderer.clear();
+		renderer.setRenderTarget(copyPass.target);
+		renderer.clear();
 		iterationCounter=0;
 		reset = false;
 	}else{
