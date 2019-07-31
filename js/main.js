@@ -109,7 +109,7 @@ function animate(){
 	contentScene.add( raytracerMesh );
 	
 
-	tonerMaterial.uniforms.factor.value=iterationCounter;
+	tonerPass.material.uniforms.factor.value=iterationCounter;
 	renderPasses();
 	iterationCounter++;
 	
