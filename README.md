@@ -1,9 +1,19 @@
-## Todo
-- add light passes over time
-- sample bsdf
-- light attentuation through third dimension
+# Lighttracer2D
 
-## Bonus
-- dispersion
-- milk like media. Sub surface scattering
-- femtophotography
+A 2d lightracer, with lens, mirror and diffuse materials.
+I was experimenting how light would travel through space in 2 dimensions. Light decays much slower compared to 3D. The algorhitm shoot photons from light sources and simulate light bounce based on physics.
+
+## features
+- laser, omni and directional light sources
+- chosse 3 materials: transparent, mirror and diffuse
+- progressive rendering
+- select and move objects
+- select and edit light sources and objects
+
+## Todo
+- pan and zoom
+- sample bsdf
+- simulate light attentuation through third dimension
+- color dispersion (prism)
+- Sub surface scattering (milk like medum).
+- Femtophotography: animate photons through time.

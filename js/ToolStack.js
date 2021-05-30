@@ -82,8 +82,6 @@ class ToolStack{
 
 				var size = event.downPoint.subtract(event.point);
 
-
-
 				this.lens = new PAPER.Path({
 					strokeColor: 'rgba(128, 128, 128, 0.7)',
 					fillColor: GlassColor,

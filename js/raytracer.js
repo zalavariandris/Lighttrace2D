@@ -1,7 +1,7 @@
 // Raytracer
 var PAPER = {};
 var raytracer = {
-	MaxBounces: 3,
+	MaxBounces: 4,
 	MaxRayLength: 2000,
 	SampleCount: 60,
 	Sampling: "random",
@@ -58,19 +58,19 @@ function initRaytracer(){
 function initSampleScene(){
 	raytracer.lights = [];
 	var omni = new PAPER.Path.Circle({
-		center: new PAPER.Point(PAPER.view.size.width*1/2-70, PAPER.view.center.y),
+		center: new PAPER.Point(300, PAPER.view.center.y),
 		radius: 30,
 		fillColor: "rgba(0,0,0,0.001)",
 		strokeColor: 'rgba(255, 150, 0, 1)',
 		parent: PAPER.project.layers['lights'],
 		data: {
-			light: 'omni' // omni | laser | spot | directional | object
+			light: 'directional' // omni | laser | spot | directional | object
 		}
 	});
 	raytracer.lights.push(omni);
 
 	new PAPER.Path.Circle({
-		center: PAPER.view.center,
+		center: new PAPER.Point(1000, PAPER.view.center.y-80),
 		radius: 150,
 		parent: PAPER.project.layers['scene'],
 		fillColor: "rgba(0,0,0,0.001)",
@@ -91,6 +91,35 @@ function initSampleScene(){
 			'material': "diffuse"
 		}
 	});
+
+	// create lens
+	topLeft = {x: 500, y: PAPER.view.center.y-160}
+	bottomRight = {x: 600, y: PAPER.view.center.y+160}
+	this.lens = new PAPER.Path({
+		strokeColor: 'rgba(128, 128, 128, 0.7)',
+		fillColor: GlassColor,
+		strokeWidth: 3,
+		parent: PAPER.project.layers['scene'],
+		data: {
+			'material': "transparent"
+		}
+	});
+
+
+	var R = 1/2.2;
+	this.lens.add(topLeft.x*R+bottomRight.x*(1-R), bottomRight.y);
+	this.lens.lineTo( topLeft.x*(1-R)+bottomRight.x*R, bottomRight.y);
+
+	this.lens.arcTo(
+		new PAPER.Point( topLeft.x, (topLeft.y+bottomRight.y)/2 ),
+		new PAPER.Point( topLeft.x*(1-R)+bottomRight.x*R, topLeft.y )
+	)
+	this.lens.lineTo( topLeft.x*R+bottomRight.x*(1-R), topLeft.y);
+	this.lens.arcTo(
+		new PAPER.Point( bottomRight.x, (topLeft.y+bottomRight.y)/2 ),
+		new PAPER.Point( topLeft.x*R+bottomRight.x*(1-R), bottomRight.y )
+	)
+
 }
 
 /*

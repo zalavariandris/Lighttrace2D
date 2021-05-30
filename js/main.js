@@ -22,11 +22,11 @@ function initGui(){
 	}
 	layersFolder.open();
 
-	var animFolder = gui.addFolder("Animation");
-	animFolder.add(window, 'Pendulum');
-	animFolder.add(window, 'PendulumSpeed', 0, 2).name("speed");
-	animFolder.add(window, "PendulumRadius", 0, 1000).name("radius");
-	animFolder.open();
+	// var animFolder = gui.addFolder("Animation");
+	// animFolder.add(window, 'Pendulum');
+	// animFolder.add(window, 'PendulumSpeed', 0, 2).name("speed");
+	// animFolder.add(window, "PendulumRadius", 0, 1000).name("radius");
+	// animFolder.open();
 
 	// Stats
 	stats = new Stats();
