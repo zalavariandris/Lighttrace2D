@@ -18,6 +18,7 @@ working demo: https://zalavariandris.github.io/Lighttrace2D/
 
 ## Todo
 - [ ] pan and zoom
+- [ ] responsive (support mobile)
 - [ ] sample bsdf
 - [ ] simulate light attentuation through third dimension
 - [ ] color dispersion (prism)
