@@ -58,7 +58,7 @@ function initRaytracer(){
 function initSampleScene(){
 	raytracer.lights = [];
 	var omni = new PAPER.Path.Circle({
-		center: new PAPER.Point(100,PAPER.view.center.y),
+		center: new PAPER.Point(PAPER.view.size.width*1/2-70, PAPER.view.center.y),
 		radius: 30,
 		fillColor: "rgba(0,0,0,0.001)",
 		strokeColor: 'rgba(255, 150, 0, 1)',
@@ -76,7 +76,7 @@ function initSampleScene(){
 		fillColor: "rgba(0,0,0,0.001)",
 		strokeColor: 'rgba(128, 128, 128, 0.7)',
 		data: {
-			material: 'transparent'
+			material: 'mirror'
 		},
 		selected: true
 	});

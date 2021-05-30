@@ -44,12 +44,18 @@ function updateGui(){
 	if(selection){
 		if(selection.data.material){
 			selectionGuiFolder = gui.addFolder("Material");
-			selectionGuiFolder.add(selection.data, "material", ["diffuse", "mirror", "transparent"]);
+			selectionGuiFolder.add(selection.data, "material", ["diffuse", "mirror", "transparent"]).onChange(()=>{
+				console.log("HELLO")
+				reset=true;
+			});
 			selectionGuiFolder.open();
 		}
 		if(selection.data.light){
 			selectionGuiFolder = gui.addFolder("LightShape");
-			selectionGuiFolder.add(selection.data, "light", ["omni", "directional", "laser"]);
+			selectionGuiFolder.add(selection.data, "light", ["omni", "directional", "laser"]).onChange(()=>{
+				console.log("HHHHHHHHHHHEEEEEEEE")
+				reset=true;
+			});
 			selectionGuiFolder.open();
 		}
 	}
@@ -93,6 +99,7 @@ function raysToGeo(pathRays){
 
 	return rayGeometry;
 }
+
 function animate(){
 	stats.begin();
 
@@ -143,5 +150,3 @@ for(let btn of document.querySelectorAll("[data-tool]")){
 }
 
 toolStack.activateTool('selectAndMoveTool');
-
-

@@ -1,3 +1,5 @@
+GlassColor = 'rgba(128, 128, 128, 0.1)'
+
 class ToolStack{
 	constructor(){
 		var self = this;
@@ -31,7 +33,10 @@ class ToolStack{
 					if(event.key == "backspace"){
 						for(var item of PAPER.project.selectedItems){
 							item.remove();
+							reset=true;
 						}
+						
+						
 					}
 				}
 			}
@@ -44,6 +49,7 @@ class ToolStack{
 			onMouseDrag: function(event){
 				if(this.circle)
 					this.circle.remove();
+
 				var scale = event.downPoint.getDistance(event.point);
 				this.circle = new PAPER.Path.Circle({
 					center: event.downPoint,
@@ -51,12 +57,13 @@ class ToolStack{
 					strokeColor: 'rgba(128, 128, 128, 0.7)',
 					fillColor: GlassColor,
 					strokeWidth: 3,
-					parent: sceneLayer,
+					parent: PAPER.project.layers['scene'],
 					data: {
 						'material': "mirror"
 					}
 				});
 				this.circle.selected = true;
+				reset = true;
 			},
 			onMouseUp: function(event){
 				this.circle = null;
@@ -75,11 +82,13 @@ class ToolStack{
 
 				var size = event.downPoint.subtract(event.point);
 
+
+
 				this.lens = new PAPER.Path({
 					strokeColor: 'rgba(128, 128, 128, 0.7)',
 					fillColor: GlassColor,
 					strokeWidth: 3,
-					parent: sceneLayer,
+					parent: PAPER.project.layers['scene'],
 					data: {
 						'material': "transparent"
 					}
@@ -115,6 +124,8 @@ class ToolStack{
 					)
 				}
 				this.lens.selected = true;
+
+				reset=true;
 			},
 			onMouseUp: function(event){
 				this.lens = null;
@@ -138,11 +149,12 @@ class ToolStack{
 				this.rect.strokeColor = 'rgba(128, 128, 128, 0.7)';
 				this.rect.fillColor = GlassColor;
 				this.rect.strokeWidth = 3;
-				this.rect.parent = sceneLayer,
+				this.rect.parent = PAPER.project.layers['scene'],
 				this.rect.data = {
 						'material': "diffuse"
 					}
 				this.rect.selected = true;
+				reset=true;
 			},
 			onMouseUp: function(event){
 				this.rect = null;
