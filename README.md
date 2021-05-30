@@ -17,9 +17,9 @@ working demo: https://zalavariandris.github.io/Lighttrace2D/
 - select and edit light sources and objects
 
 ## Todo
-- pan and zoom
-- sample bsdf
-- simulate light attentuation through third dimension
-- color dispersion (prism)
-- Sub surface scattering (milk like medum).
-- Femtophotography: animate photons through time.
+- [ ] pan and zoom
+- [ ] sample bsdf
+- [ ] simulate light attentuation through third dimension
+- [ ] color dispersion (prism)
+- [ ] Sub surface scattering (milk like medum).
+- [ ] Femtophotography: animate photons through time.
