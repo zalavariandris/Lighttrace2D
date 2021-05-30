@@ -3,6 +3,11 @@
 A 2d lightracer, with lens, mirror and diffuse materials.
 I was experimenting how light would travel through space in 2 dimensions. Light decays much slower compared to 3D. The algorhitm shoot photons from light sources and simulate light bounce based on physics.
 
+🟥 The demo was tested on chrome, desktop only.
+working demo: https://zalavariandris.github.io/Lighttrace2D/
+
+![sreenshot](./docs/screenshot.png)
+
 ## features
 - laser, omni and directional light sources
 - chosse 3 materials: transparent, mirror and diffuse
