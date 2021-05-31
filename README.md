@@ -7,7 +7,7 @@ I was experimenting how light would travel through space in 2 dimensions. Light 
 
 working demo: https://zalavariandris.github.io/Lighttrace2D/
 
-![sreenshot](./docs/screenshot.png)
+![sreenshot](./docs/screenshot-lenses.png)
 
 ## Features
 - laser, omni and directional light sources
